@@ -5,18 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        #tableContainer {
+            overflow-x: auto; /* Enables horizontal scrolling */
+        }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
-            overflow-y: auto;
             max-height: 300px;
-        }
-        #tokenDataTable table {
             width: 100%;
-            table-layout: fixed;
+            border-collapse: collapse;
+            table-layout: auto; /* Allows the table to adjust column widths */
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
             padding: 8px;
+            white-space: nowrap; /* Prevents text from wrapping */
         }
         #tokenDataTable th {
             position: sticky;
@@ -37,11 +39,14 @@
         #tokenDataTable .negative {
             color: red;
         }
+        #tokenDataTable td.market-cap {
+            min-width: 150px; /* Sets a minimum width for the market cap column */
+        }
     </style>
 </head>
 <body>
-    <div id="tokenDataTable">
-        <table>
+    <div id="tableContainer">
+        <table id="tokenDataTable">
             <thead>
                 <tr>
                     <th>Symbol</th>
@@ -66,6 +71,7 @@
                 }
                 const {coins} = await response.json();
                 console.log('Fetched trending coins:', coins);
+
                 for (const {item} of coins) {
                     try {
                         const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
@@ -74,6 +80,8 @@
                             throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
                         }
                         const coinData = await coinResponse.json();
+                        console.log(`Fetched details for coin ${item.id}:`, coinData);
+
                         const price = coinData.market_data.current_price.usd;
                         const priceChangePercentage24h = coinData.market_data.price_change_percentage_24h;
                         const marketCap = coinData.market_data.market_cap.usd;
@@ -83,6 +91,7 @@
                         const priceCell = row.insertCell(1);
                         const changeCell = row.insertCell(2);
                         const marketCapCell = row.insertCell(3);
+                        marketCapCell.classList.add('market-cap'); /* Add class to market cap cell */
                         symbolCell.innerHTML = item.symbol.toUpperCase();
                         priceCell.innerHTML = price !== undefined ? price.toFixed(3) : 'N/A';
                         changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
