@@ -1,8 +1,6 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         #tokenDataTable {
@@ -12,7 +10,7 @@
         }
         #tokenDataTable table {
             width: 100%;
-            table-layout: fixed;
+            table-layout: fixed; /* Add this line */
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
@@ -23,7 +21,7 @@
             top: 0;
             background-color: #4237FF;
             color: white;
-            z-index: 2;
+            z-index: 2; /* Ensure it stays on top of other content */
         }
         #tokenDataTable tr:nth-child(even) {
             background-color: #F2F2F2;
@@ -38,7 +36,6 @@
             color: red;
         }
     </style>
-</head>
 <body>
     <div id="tokenDataTable">
         <table>
@@ -61,32 +58,23 @@
             const tbody = document.querySelector('#tokenDataTable tbody');
             try {
                 const response = await fetch(apiUrl);
-                const {coins} = await response.json();
-                for (const {item} of coins) {
-                    try {
-                        const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
-                        const coinResponse = await fetch(coinDetailUrl);
-                        const coinData = await coinResponse.json();
-                        const price = coinData.market_data.current_price.usd;
-                        const priceChangePercentage24h = coinData.market_data.price_change_percentage_24h;
-                        const marketCap = coinData.market_data.market_cap.usd;
-
-                        const row = tbody.insertRow(-1);
-                        const symbolCell = row.insertCell(0);
-                        const priceCell = row.insertCell(1);
-                        const changeCell = row.insertCell(2);
-                        const marketCapCell = row.insertCell(3);
-                        symbolCell.innerHTML = item.symbol.toUpperCase();
-                        priceCell.innerHTML = price !== undefined ? price.toFixed(3) : 'N/A';
-                        changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
-                        changeCell.className = priceChangePercentage24h > 0 ? 'positive' : 'negative';
-                        marketCapCell.innerHTML = marketCap !== undefined ? marketCap.toLocaleString() : 'N/A';
-                    } catch (coinError) {
-                        console.error(`Error fetching data for coin ${item.id}:`, coinError);
-                    }
-                }
+                let {coins} = await response.json();
+                // Sort coins by price change percentage 24h
+                coins.sort((a, b) => b.item.data.price_change_percentage_24h.usd - a.item.data.price_change_percentage_24h.usd);
+                coins.forEach(({item}) => {
+                    const row = tbody.insertRow(-1);
+                    const symbolCell = row.insertCell(0);
+                    const priceCell = row.insertCell(1);
+                    const changeCell = row.insertCell(2);
+                    const marketCapCell = row.insertCell(3);
+                    symbolCell.innerHTML = item.symbol.toUpperCase();
+                    priceCell.innerHTML = item.data.price;
+                    changeCell.innerHTML = ${item.data.price_change_percentage_24h.usd.toFixed(2)}%;
+                    changeCell.className = item.data.price_change_percentage_24h.usd > 0 ? 'positive' : 'negative';
+                    marketCapCell.innerHTML = item.data.market_cap;
+                });
             } catch (error) {
-                console.error('Error fetching trending coins:', error);
+                console.error('Error:', error);
                 const row = tbody.insertRow(-1);
                 const cell = row.insertCell(0);
                 cell.innerHTML = 'Error loading data.';
