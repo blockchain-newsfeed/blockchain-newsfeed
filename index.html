@@ -7,10 +7,10 @@
     <style>
         #tableContainer {
             overflow-x: auto; /* Enables horizontal scrolling */
+            width: 100%;
         }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
-            max-height: 300px;
             width: 100%;
             border-collapse: collapse;
             table-layout: auto; /* Allows the table to adjust column widths */
@@ -19,6 +19,8 @@
             text-align: left;
             padding: 8px;
             white-space: nowrap; /* Prevents text from wrapping */
+            overflow: hidden; /* Ensures content overflows correctly */
+            text-overflow: ellipsis; /* Adds ellipsis for overflow text */
         }
         #tokenDataTable th {
             position: sticky;
@@ -26,6 +28,10 @@
             background-color: #4237FF;
             color: white;
             z-index: 2;
+            border-right: 1px solid white; /* Adds a white vertical divider */
+        }
+        #tokenDataTable th:last-child {
+            border-right: none; /* Removes the border from the last column */
         }
         #tokenDataTable tr:nth-child(even) {
             background-color: #F2F2F2;
@@ -39,7 +45,17 @@
         #tokenDataTable .negative {
             color: red;
         }
-        #tokenDataTable td.market-cap {
+        #tokenDataTable th:nth-child(1), #tokenDataTable td:nth-child(1) {
+            width: 15%;
+        }
+        #tokenDataTable th:nth-child(2), #tokenDataTable td:nth-child(2) {
+            width: 15%;
+        }
+        #tokenDataTable th:nth-child(3), #tokenDataTable td:nth-child(3) {
+            width: 15%;
+        }
+        #tokenDataTable th:nth-child(4), #tokenDataTable td:nth-child(4) {
+            width: 55%; /* Increased width for Market Cap column */
             min-width: 150px; /* Sets a minimum width for the market cap column */
         }
     </style>
@@ -91,7 +107,6 @@
                         const priceCell = row.insertCell(1);
                         const changeCell = row.insertCell(2);
                         const marketCapCell = row.insertCell(3);
-                        marketCapCell.classList.add('market-cap'); /* Add class to market cap cell */
                         symbolCell.innerHTML = item.symbol.toUpperCase();
                         priceCell.innerHTML = price !== undefined ? price.toFixed(3) : 'N/A';
                         changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
