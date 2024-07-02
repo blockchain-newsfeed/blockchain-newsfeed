@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        #tableContainer {
+            overflow-x: auto; /* Enable horizontal scrolling */
+        }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
-            overflow-y: auto;
-            max-height: 300px;
-        }
-        #tokenDataTable table {
+            border-collapse: collapse;
             width: 100%;
-            table-layout: fixed;
+            table-layout: auto;
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
             padding: 8px;
+            white-space: nowrap; /* Prevent text wrapping */
         }
         #tokenDataTable th {
             position: sticky;
@@ -40,8 +41,8 @@
     </style>
 </head>
 <body>
-    <div id="tokenDataTable">
-        <table>
+    <div id="tableContainer">
+        <table id="tokenDataTable">
             <thead>
                 <tr>
                     <th>Symbol</th>
@@ -66,7 +67,21 @@
                 }
                 const { coins } = await response.json();
                 for (const { item } of coins) {
-                    const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
+                    await fetchCoinData(item, tbody);
+                }
+            } catch (error) {
+                console.error('Error fetching trending coins:', error);
+                const row = tbody.insertRow(-1);
+                const cell = row.insertCell(0);
+                cell.innerHTML = 'Error loading data.';
+                cell.colSpan = 4;
+            }
+        }
+
+        async function fetchCoinData(item, tbody, retries = 3) {
+            const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
                     const coinResponse = await fetch(coinDetailUrl);
                     if (!coinResponse.ok) {
                         throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
@@ -82,19 +97,25 @@
                     const changeCell = row.insertCell(2);
                     const marketCapCell = row.insertCell(3);
                     symbolCell.innerHTML = item.symbol.toUpperCase();
-                    priceCell.innerHTML = price !== undefined ? `${price.toFixed(4)}` : 'N/A';
+                    priceCell.innerHTML = price !== undefined ? `${price.toFixed(3)}` : 'N/A';
                     changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
                     changeCell.className = priceChangePercentage24h > 0 ? 'positive' : 'negative';
                     marketCapCell.innerHTML = marketCap !== undefined ? marketCap.toLocaleString() : 'N/A';
+
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Delay to avoid rate limiting
+                    break; // Break if successful
+                } catch (coinError) {
+                    console.error(`Error fetching data for coin ${item.id}, attempt ${attempt}:`, coinError);
+                    if (attempt === retries) {
+                        const row = tbody.insertRow(-1);
+                        const cell = row.insertCell(0);
+                        cell.innerHTML = `Failed to load data for ${item.symbol.toUpperCase()}`;
+                        cell.colSpan = 4;
+                    }
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                const row = tbody.insertRow(-1);
-                const cell = row.insertCell(0);
-                cell.innerHTML = 'Error loading data.';
-                cell.colSpan = 4;
             }
         }
+
         loadData(); // Call loadData function immediately after defining it
     </script>
 </body>
