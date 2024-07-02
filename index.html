@@ -1,35 +1,27 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        #tableContainer {
-            overflow-x: auto;
-        }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
+            overflow-y: auto;
             max-height: 300px;
+        }
+        #tokenDataTable table {
             width: 100%;
-            border-collapse: collapse;
-            table-layout: auto;
+            table-layout: fixed; /* Add this line */
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
             padding: 8px;
-            white-space: nowrap;
         }
         #tokenDataTable th {
             position: sticky;
             top: 0;
             background-color: #4237FF;
             color: white;
-            z-index: 2;
-            border-right: 1px solid white;
-        }
-        #tokenDataTable th:last-child {
-            border-right: none;
+            z-index: 2; /* Ensure it stays on top of other content */
         }
         #tokenDataTable tr:nth-child(even) {
             background-color: #F2F2F2;
@@ -43,26 +35,15 @@
         #tokenDataTable .negative {
             color: red;
         }
-        #tokenDataTable td.market-cap {
-            min-width: 150px;
-        }
-        #loadingSpinner {
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
-            padding: 20px;
-            display: none;
-        }
     </style>
-</head>
 <body>
-    <div id="loadingSpinner">Loading data, please wait...</div>
-    <div id="tableContainer" style="display: none;">
-        <table id="tokenDataTable">
+    <div id="tokenDataTable">
+        <table>
             <thead>
                 <tr>
                     <th>Symbol</th>
                     <th>Price</th>
-                    <th>24h %</th>
+                    <th>24h Change</th>
                     <th>Market Cap</th>
                 </tr>
             </thead>
@@ -74,81 +55,33 @@
     <script>
         async function loadData() {
             const apiUrl = 'https://api.coingecko.com/api/v3/search/trending';
-            const proxyUrl = 'https://api.allorigins.win/get?url=';
             const tbody = document.querySelector('#tokenDataTable tbody');
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const tableContainer = document.getElementById('tableContainer');
-
-            loadingSpinner.style.display = 'block';
-            tableContainer.style.display = 'none';
-
             try {
-                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.statusText}`);
-                }
-                const { contents } = await response.json();
-                const { coins } = JSON.parse(contents);
-                console.log('Fetched trending coins:', coins);
-
-                for (const { item } of coins) {
-                    await fetchCoinDataWithRetry(item, tbody, proxyUrl);
-                }
-            } catch (error) {
-                console.error('Error fetching trending coins:', error);
-                const row = tbody.insertRow(-1);
-                const cell = row.insertCell(0);
-                cell.innerHTML = 'Error loading data.';
-                cell.colSpan = 4;
-            } finally {
-                loadingSpinner.style.display = 'none';
-                tableContainer.style.display = 'block';
-            }
-        }
-
-        async function fetchCoinDataWithRetry(item, tbody, proxyUrl, retries = 3) {
-            const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
-            for (let attempt = 1; attempt <= retries; attempt++) {
-                try {
-                    const coinResponse = await fetch(proxyUrl + encodeURIComponent(coinDetailUrl));
-                    if (!coinResponse.ok) {
-                        throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
-                    }
-                    const { contents } = await coinResponse.json();
-                    const coinData = JSON.parse(contents);
-                    console.log(`Fetched details for coin ${item.id}:`, coinData);
-
-                    const price = coinData.market_data.current_price.usd;
-                    const priceChangePercentage24h = coinData.market_data.price_change_percentage_24h;
-                    const marketCap = coinData.market_data.market_cap.usd;
-
+                const response = await fetch(apiUrl);
+                let {coins} = await response.json();
+                // Sort coins by price change percentage 24h
+                coins.sort((a, b) => b.item.data.price_change_percentage_24h.usd - a.item.data.price_change_percentage_24h.usd);
+                coins.forEach(({item}) => {
                     const row = tbody.insertRow(-1);
                     const symbolCell = row.insertCell(0);
                     const priceCell = row.insertCell(1);
                     const changeCell = row.insertCell(2);
                     const marketCapCell = row.insertCell(3);
-                    marketCapCell.classList.add('market-cap');
                     symbolCell.innerHTML = item.symbol.toUpperCase();
-                    priceCell.innerHTML = price !== undefined ? price.toFixed(3) : 'N/A';
-                    changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
-                    changeCell.className = priceChangePercentage24h > 0 ? 'positive' : 'negative';
-                    marketCapCell.innerHTML = marketCap !== undefined ? marketCap.toLocaleString() : 'N/A';
-
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Delay to avoid rate limiting
-                    break; // Break if successful
-                } catch (coinError) {
-                    console.error(`Error fetching data for coin ${item.id}, attempt ${attempt}:`, coinError);
-                    if (attempt === retries) {
-                        const row = tbody.insertRow(-1);
-                        const cell = row.insertCell(0);
-                        cell.innerHTML = `Failed to load data for ${item.symbol.toUpperCase()}`;
-                        cell.colSpan = 4;
-                    }
-                }
+                    priceCell.innerHTML = item.data.price;
+                    changeCell.innerHTML = `${item.data.price_change_percentage_24h.usd.toFixed(2)}%`;
+                    changeCell.className = item.data.price_change_percentage_24h.usd > 0 ? 'positive' : 'negative';
+                    marketCapCell.innerHTML = item.data.market_cap;
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                const row = tbody.insertRow(-1);
+                const cell = row.insertCell(0);
+                cell.innerHTML = 'Error loading data.';
+                cell.colSpan = 4;
             }
         }
-
-        loadData();
+        loadData(); // Call loadData function immediately after defining it
     </script>
 </body>
 </html>
