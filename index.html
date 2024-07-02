@@ -1,6 +1,8 @@
+<!DOCTYPE html>
 <html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         #tokenDataTable {
@@ -10,7 +12,7 @@
         }
         #tokenDataTable table {
             width: 100%;
-            table-layout: fixed; /* Add this line */
+            table-layout: fixed;
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
@@ -21,7 +23,7 @@
             top: 0;
             background-color: #4237FF;
             color: white;
-            z-index: 2; /* Ensure it stays on top of other content */
+            z-index: 2;
         }
         #tokenDataTable tr:nth-child(even) {
             background-color: #F2F2F2;
@@ -36,6 +38,7 @@
             color: red;
         }
     </style>
+</head>
 <body>
     <div id="tokenDataTable">
         <table>
@@ -59,7 +62,6 @@
             try {
                 const response = await fetch(apiUrl);
                 let {coins} = await response.json();
-                // Sort coins by price change percentage 24h
                 coins.sort((a, b) => b.item.data.price_change_percentage_24h.usd - a.item.data.price_change_percentage_24h.usd);
                 coins.forEach(({item}) => {
                     const row = tbody.insertRow(-1);
@@ -68,7 +70,7 @@
                     const changeCell = row.insertCell(2);
                     const marketCapCell = row.insertCell(3);
                     symbolCell.innerHTML = item.symbol.toUpperCase();
-                    priceCell.innerHTML = item.data.price;
+                    priceCell.innerHTML = item.data.price.toFixed(4);
                     changeCell.innerHTML = `${item.data.price_change_percentage_24h.usd.toFixed(2)}%`;
                     changeCell.className = item.data.price_change_percentage_24h.usd > 0 ? 'positive' : 'negative';
                     marketCapCell.innerHTML = item.data.market_cap;
