@@ -1,27 +1,30 @@
+<!DOCTYPE html>
 <html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        #tableContainer {
+            overflow-x: auto; /* Enable horizontal scrolling */
+        }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
-            overflow-y: auto;
-            max-height: 300px;
-        }
-        #tokenDataTable table {
+            border-collapse: collapse;
             width: 100%;
-            table-layout: fixed; /* Add this line */
+            table-layout: fixed;
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
             padding: 8px;
+            white-space: nowrap; /* Prevent text wrapping */
         }
         #tokenDataTable th {
             position: sticky;
             top: 0;
             background-color: #4237FF;
             color: white;
-            z-index: 2; /* Ensure it stays on top of other content */
+            z-index: 2;
         }
         #tokenDataTable tr:nth-child(even) {
             background-color: #F2F2F2;
@@ -36,9 +39,10 @@
             color: red;
         }
     </style>
+</head>
 <body>
-    <div id="tokenDataTable">
-        <table>
+    <div id="tableContainer">
+        <table id="tokenDataTable">
             <thead>
                 <tr>
                     <th>Symbol</th>
