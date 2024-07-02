@@ -74,6 +74,7 @@
     <script>
         async function loadData() {
             const apiUrl = 'https://api.coingecko.com/api/v3/search/trending';
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
             const tbody = document.querySelector('#tokenDataTable tbody');
             const loadingSpinner = document.getElementById('loadingSpinner');
             const tableContainer = document.getElementById('tableContainer');
@@ -82,7 +83,7 @@
             tableContainer.style.display = 'none';
 
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(proxyUrl + apiUrl);
                 if (!response.ok) {
                     throw new Error(`Network response was not ok: ${response.statusText}`);
                 }
@@ -90,7 +91,7 @@
                 console.log('Fetched trending coins:', coins);
 
                 for (const {item} of coins) {
-                    await fetchCoinDataWithRetry(item, tbody);
+                    await fetchCoinDataWithRetry(item, tbody, proxyUrl);
                 }
             } catch (error) {
                 console.error('Error fetching trending coins:', error);
@@ -104,11 +105,11 @@
             }
         }
 
-        async function fetchCoinDataWithRetry(item, tbody, retries = 3) {
+        async function fetchCoinDataWithRetry(item, tbody, proxyUrl, retries = 3) {
             const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
             for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
-                    const coinResponse = await fetch(coinDetailUrl);
+                    const coinResponse = await fetch(proxyUrl + coinDetailUrl);
                     if (!coinResponse.ok) {
                         throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
                     }
