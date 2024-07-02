@@ -61,19 +61,31 @@
             const tbody = document.querySelector('#tokenDataTable tbody');
             try {
                 const response = await fetch(apiUrl);
-                let {coins} = await response.json();
-                coins.sort((a, b) => b.item.data.price_change_percentage_24h.usd - a.item.data.price_change_percentage_24h.usd);
-                coins.forEach(({item}) => {
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                const {coins} = await response.json();
+                coins.forEach(async ({item}) => {
+                    const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
+                    const coinResponse = await fetch(coinDetailUrl);
+                    if (!coinResponse.ok) {
+                        throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
+                    }
+                    const coinData = await coinResponse.json();
+                    const price = coinData.market_data.current_price.usd;
+                    const priceChangePercentage24h = coinData.market_data.price_change_percentage_24h;
+                    const marketCap = coinData.market_data.market_cap.usd;
+
                     const row = tbody.insertRow(-1);
                     const symbolCell = row.insertCell(0);
                     const priceCell = row.insertCell(1);
                     const changeCell = row.insertCell(2);
                     const marketCapCell = row.insertCell(3);
                     symbolCell.innerHTML = item.symbol.toUpperCase();
-                    priceCell.innerHTML = item.data.price.toFixed(4);
-                    changeCell.innerHTML = `${item.data.price_change_percentage_24h.usd.toFixed(2)}%`;
-                    changeCell.className = item.data.price_change_percentage_24h.usd > 0 ? 'positive' : 'negative';
-                    marketCapCell.innerHTML = item.data.market_cap;
+                    priceCell.innerHTML = price !== undefined ? price.toFixed(4) : 'N/A';
+                    changeCell.innerHTML = priceChangePercentage24h !== undefined ? `${priceChangePercentage24h.toFixed(2)}%` : 'N/A';
+                    changeCell.className = priceChangePercentage24h > 0 ? 'positive' : 'negative';
+                    marketCapCell.innerHTML = marketCap !== undefined ? marketCap.toLocaleString() : 'N/A';
                 });
             } catch (error) {
                 console.error('Error:', error);
