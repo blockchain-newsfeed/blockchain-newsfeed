@@ -7,17 +7,19 @@
     <style>
         #tableContainer {
             overflow-x: auto; /* Enable horizontal scrolling */
+            width: 100%; /* Ensure container takes full width */
         }
         #tokenDataTable {
             font-family: 'Poppins', sans-serif;
             border-collapse: collapse;
             width: 100%;
-            table-layout: fixed;
+            table-layout: auto; /* Allow table to adjust column widths */
         }
         #tokenDataTable th, #tokenDataTable td {
             text-align: left;
             padding: 8px;
             white-space: nowrap; /* Prevent text wrapping */
+            border: 1px solid #ddd; /* Add border for better separation */
         }
         #tokenDataTable th {
             position: sticky;
@@ -62,17 +64,17 @@
             const tbody = document.querySelector('#tokenDataTable tbody');
             try {
                 const response = await fetch(apiUrl);
-                let {coins} = await response.json();
+                let { coins } = await response.json();
                 // Sort coins by price change percentage 24h
                 coins.sort((a, b) => b.item.data.price_change_percentage_24h.usd - a.item.data.price_change_percentage_24h.usd);
-                coins.forEach(({item}) => {
+                coins.forEach(({ item }) => {
                     const row = tbody.insertRow(-1);
                     const symbolCell = row.insertCell(0);
                     const priceCell = row.insertCell(1);
                     const changeCell = row.insertCell(2);
                     const marketCapCell = row.insertCell(3);
                     symbolCell.innerHTML = item.symbol.toUpperCase();
-                    priceCell.innerHTML = item.data.price;
+                    priceCell.innerHTML = item.data.price.toFixed(3); /* Ensure price has 3 decimal places */
                     changeCell.innerHTML = `${item.data.price_change_percentage_24h.usd.toFixed(2)}%`;
                     changeCell.className = item.data.price_change_percentage_24h.usd > 0 ? 'positive' : 'negative';
                     marketCapCell.innerHTML = item.data.market_cap;
