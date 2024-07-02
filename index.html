@@ -74,7 +74,7 @@
     <script>
         async function loadData() {
             const apiUrl = 'https://api.coingecko.com/api/v3/search/trending';
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const proxyUrl = 'https://api.allorigins.win/get?url=';
             const tbody = document.querySelector('#tokenDataTable tbody');
             const loadingSpinner = document.getElementById('loadingSpinner');
             const tableContainer = document.getElementById('tableContainer');
@@ -83,14 +83,15 @@
             tableContainer.style.display = 'none';
 
             try {
-                const response = await fetch(proxyUrl + apiUrl);
+                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
                 if (!response.ok) {
                     throw new Error(`Network response was not ok: ${response.statusText}`);
                 }
-                const {coins} = await response.json();
+                const { contents } = await response.json();
+                const { coins } = JSON.parse(contents);
                 console.log('Fetched trending coins:', coins);
 
-                for (const {item} of coins) {
+                for (const { item } of coins) {
                     await fetchCoinDataWithRetry(item, tbody, proxyUrl);
                 }
             } catch (error) {
@@ -109,11 +110,12 @@
             const coinDetailUrl = `https://api.coingecko.com/api/v3/coins/${item.id}`;
             for (let attempt = 1; attempt <= retries; attempt++) {
                 try {
-                    const coinResponse = await fetch(proxyUrl + coinDetailUrl);
+                    const coinResponse = await fetch(proxyUrl + encodeURIComponent(coinDetailUrl));
                     if (!coinResponse.ok) {
                         throw new Error(`Network response was not ok for coin ${item.id}: ${coinResponse.statusText}`);
                     }
-                    const coinData = await coinResponse.json();
+                    const { contents } = await coinResponse.json();
+                    const coinData = JSON.parse(contents);
                     console.log(`Fetched details for coin ${item.id}:`, coinData);
 
                     const price = coinData.market_data.current_price.usd;
